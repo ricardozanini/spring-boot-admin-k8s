@@ -1,0 +1,65 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>spring.boot.samples.k8s</groupId>
+	<artifactId>spring-boot-admin-k8s</artifactId>
+	<version>1.0.0</version>
+	<packaging>pom</packaging>
+	<name>Spring Boot Admin K8S</name>
+	<description>A sample project of how to integrate Spring Boot Admin and Spring Boot microservices with Kubernetes</description>
+	<modules>
+		<module>admin</module>
+		<module>service</module>
+	</modules>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<spring.boot-version>2.0.4.RELEASE</spring.boot-version>
+		<spring.boot.admin-version>2.0.2</spring.boot.admin-version>
+		<java.version>1.8</java.version>
+		<maven-dependency.version>2.10</maven-dependency.version>
+		<maven-resources.version>2.6</maven-resources.version>
+	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<!-- Spring Boot BOM -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-dependencies</artifactId>
+				<version>${spring.boot-version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>de.codecentric</groupId>
+				<artifactId>spring-boot-admin-starter-client</artifactId>
+				<version>${spring.boot.admin-version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>${spring.boot-version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
