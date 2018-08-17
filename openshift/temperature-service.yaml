@@ -1,55 +1,61 @@
 apiVersion: v1
 kind: Template
 labels:
-  template: spring-boot-admin
-  project: spring-boot-admin
+  template: temperature-service
+  app: temperature-service
 metadata:
   annotations:
-    description: Spring Boot Admin on OpenShift Template
+    description: Spring Boot Temperature Service to test Spring Boot Admin environment
     iconClass: icon-java
     tags: microservice,spring,spring-boot
     author: Ricardo Zanini <ricardozanini@gmail.com>
     url: https://github.com/ricardozanini/spring-boot-admin-k8s
-  name: spring-boot-admin
+  name: temperature-service
+parameters:
+- description: Spring Boot Admin URL. If it's deployed locally, use service url (e.g. http://spring-boot-admin:8080)
+  displayName: Spring Boot Admin URL
+  name: SPRING_BOOT_ADMIN_URL
+  required: true
+  value: http://spring-boot-admin.<namespace>.svc:8080
 objects:
 - apiVersion: v1
   kind: ImageStream
   metadata:
     labels:
-      app: spring-boot-admin
-    name: spring-boot-admin
+      app: temperature-service
+    name: temperature-service
   spec:
     tags:
-    - name: latest
+      - name: latest
 - apiVersion: v1
   kind: BuildConfig
   metadata:
     labels:
-      app: spring-boot-admin
-    name: spring-boot-admin
+      app: temperature-service
+    name: temperature-service
   spec:
     nodeSelector: null
     output:
       to:
         kind: ImageStreamTag
-        name: spring-boot-admin:latest
+        name: temperature-service:latest
     postCommit: {}
     resources: {}
     runPolicy: Serial
     source:
       git:
         ref: master
-        uri: https://github.com/ricardozanini/spring-boot-admin-k8s
+        uri: https://github.com/ricardozanini/spring-boot-admin-k8s.git
       type: Git
     strategy:
       sourceStrategy:
         env:
         - name: MAVEN_ARGS_APPEND
-          value: --projects admin --also-make
+          value: -pl service --also-make
         - name: ARTIFACT_DIR
-          value: admin/target
+          value: service/target
         - name: MODULE_DIR
-          value: admin
+          value: service
         from:
           kind: ImageStreamTag
           name: redhat-openjdk18-openshift:1.2
@@ -63,13 +69,13 @@ objects:
   kind: DeploymentConfig
   metadata:
     labels:
-      app: spring-boot-admin
-    name: spring-boot-admin
+      app: temperature-service
+    name: temperature-service
   spec:
     replicas: 1
     selector:
-      app: spring-boot-admin
-      deploymentconfig: spring-boot-admin
+      deploymentconfig: temperature-service
+      app: temperature-service
     strategy:
       resources: {}
       rollingParams:
@@ -82,14 +88,14 @@ objects:
     template:
       metadata:
         labels:
-          app: spring-boot-admin
-          deploymentconfig: spring-boot-admin
+          app: temperature-service
+          deploymentconfig: temperature-service
       spec:
         containers:
         - env:
-          - name: SERVER_PORT
-            value: "8080"
-          image: spring-boot-admin
+          - name: SPRING_BOOT_ADMIN_URL
+            value: ${SPRING_BOOT_ADMIN_URL}
+          image: temperature-service
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
@@ -100,8 +106,8 @@ objects:
             initialDelaySeconds: 180
             periodSeconds: 10
             successThreshold: 1
-            timeoutSeconds: 3
-          name: spring-boot-admin
+            timeoutSeconds: 1
+          name: temperature-service
           ports:
           - containerPort: 8080
             protocol: TCP
@@ -118,36 +124,37 @@ objects:
             initialDelaySeconds: 180
             periodSeconds: 10
             successThreshold: 1
-            timeoutSeconds: 3
+            timeoutSeconds: 1
           resources:
             limits:
-              cpu: 600m
-              memory: 256Mi
-            requests:
               cpu: 400m
               memory: 128Mi
+            requests:
+              cpu: 200m
+              memory: 64Mi
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         dnsPolicy: ClusterFirst
         restartPolicy: Always
+        schedulerName: default-scheduler
         securityContext: {}
         terminationGracePeriodSeconds: 30
     triggers:
     - imageChangeParams:
         automatic: true
         containerNames:
-        - spring-boot-admin
+        - temperature-service
         from:
           kind: ImageStreamTag
-          name: spring-boot-admin:latest
+          name: temperature-service:latest
       type: ImageChange
     - type: ConfigChange
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
-      app: spring-boot-admin
-    name: spring-boot-admin
+      app: temperature-service
+    name: temperature-service
   spec:
     ports:
     - name: 8080-tcp
@@ -163,19 +170,19 @@ objects:
       protocol: TCP
       targetPort: 8778
     selector:
-      deploymentconfig: spring-boot-admin
+      deploymentconfig: temperature-service
     sessionAffinity: None
     type: ClusterIP
 - apiVersion: v1
   kind: Route
   metadata:
     labels:
-      app: spring-boot-admin
-    name: spring-boot-admin
+      app: temperature-service
+    name: temperature-service
   spec:
     port:
       targetPort: 8080-tcp
     to:
       kind: Service
-      name: spring-boot-admin
+      name: temperature-service
       weight: 100
